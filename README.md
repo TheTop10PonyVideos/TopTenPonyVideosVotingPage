@@ -184,4 +184,4 @@ The initial admin user is created based on the `TEST_USER` setting in `config.py
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache2 License - see the LICENSE file for details.
