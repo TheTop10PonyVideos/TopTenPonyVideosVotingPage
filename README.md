@@ -1,6 +1,6 @@
 # TopTenPonyVideos
 
-A dynamic Flask-based voting platform dedicated to ranking and celebrating pony-related videos from multiple online platforms.
+A dynamic Flask-based voting platform dedicated to ranking pony-related videos from multiple online platforms.
 
 ## Features
 
