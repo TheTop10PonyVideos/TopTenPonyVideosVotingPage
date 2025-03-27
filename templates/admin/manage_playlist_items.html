@@ -1,0 +1,529 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Playlist Items - Admin Dashboard - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        {% include 'admin/nav.html' %}
+    </div>
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Manage Playlist: {{ playlist.name }}</h1>
+            <a href="{{ url_for('admin.edit_playlist', id=playlist.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-edit me-1"></i> Edit Playlist Details
+            </a>
+        </div>
+
+        <div class="alert alert-info mb-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="mb-1"><strong>Voting Period:</strong> {{ playlist.voting_period.name }}</p>
+                    <p class="mb-0"><strong>Items:</strong> {{ playlist.items|length }} videos</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('main.view_playlist', id=playlist.id) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-external-link-alt me-1"></i> View Public Page
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Playlist Items</h4>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                    <i class="fas fa-plus me-1"></i> Add Item
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if playlist.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Position</th>
+                                <th>Video</th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playlistItemsBody">
+                            {% for item in playlist.items|sort(attribute='position') %}
+                            <tr data-item-id="{{ item.id }}">
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control position-input" value="{{ item.position }}" min="1">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.video and item.video.thumbnail_url %}
+                                        <img src="{{ item.video.thumbnail_url }}" alt="{{ item.video.title }}" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                        {% elif item.custom_title %}
+                                        <div class="bg-secondary d-flex align-items-center justify-content-center me-2" style="width: 80px; height: 45px;">
+                                            <i class="fas fa-film text-white"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            {% if item.video %}
+                                            <div class="fw-bold">{{ item.video.title }}</div>
+                                            <small class="text-muted">{{ item.video.creator.name }}</small>
+                                            {% else %}
+                                            <div class="fw-bold">{{ item.custom_title }}</div>
+                                            <small class="text-muted">Custom Entry</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% if item.video %}{{ item.video.url }}{% else %}{{ item.custom_url }}{% endif %}" target="_blank" class="btn btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger delete-item" data-item-id="{{ item.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <button id="savePositionsBtn" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Save Order
+                    </button>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-film fa-3x text-muted mb-3"></i>
+                    <p>No items in this playlist yet</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                        <i class="fas fa-plus me-1"></i> Add Videos
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Add Items Options</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Add Top Videos</h5>
+                                <p class="card-text">Automatically add the top videos from this voting period to your playlist.</p>
+                                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#topVideosModal">
+                                    <i class="fas fa-trophy me-1"></i> Add Top Videos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Add Custom Video</h5>
+                                <p class="card-text">Add a custom video entry that's not in our database.</p>
+                                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#customVideoModal">
+                                    <i class="fas fa-plus me-1"></i> Add Custom Video
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addItemModalLabel">Add Video to Playlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addVideoForm" method="post" action="{{ url_for('admin.add_playlist_item', playlist_id=playlist.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="video_search" class="form-label">Search for a video</label>
+                        <input type="text" class="form-control" id="video_search" placeholder="Search by title, creator, or platform">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select video</label>
+                        <div class="list-group" id="videoSearchResults" style="max-height: 300px; overflow-y: auto;">
+                            
+                            {% for video in videos %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        {% if video.thumbnail_url %}
+                                        <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-secondary d-flex align-items-center justify-content-center me-2" style="width: 80px; height: 45px;">
+                                            <i class="fas fa-film text-white"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ video.title }}</h6>
+                                            <small class="text-muted">{{ video.creator.name }}</small>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary add-video" data-video-id="{{ video.id }}">Add</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="topVideosModal" tabindex="-1" aria-labelledby="topVideosModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="topVideosModalLabel">Add Top Videos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTopVideosForm" method="post" action="{{ url_for('admin.add_top_videos', playlist_id=playlist.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="top_count" class="form-label">Number of top videos to add</label>
+                        <input type="number" class="form-control" id="top_count" name="top_count" value="10" min="1" max="50">
+                        <div class="form-text">Videos will be added in order of their ranking.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="replace_existing" name="replace_existing" value="true">
+                            <label class="form-check-label" for="replace_existing">
+                                Replace existing playlist items
+                            </label>
+                        </div>
+                        <div class="form-text">If checked, all existing items will be removed before adding new ones.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addTopVideosForm" class="btn btn-primary">Add Top Videos</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="customVideoModal" tabindex="-1" aria-labelledby="customVideoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customVideoModalLabel">Add Custom Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCustomVideoForm" method="post" action="{{ url_for('admin.add_custom_item', playlist_id=playlist.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="custom_url" class="form-label">Video URL</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="custom_url" name="custom_url" required>
+                            <button type="button" class="btn btn-outline-primary" id="fetchMetadataBtn">
+                                <i class="fas fa-sync-alt"></i> Fetch Metadata
+                            </button>
+                        </div>
+                        <div class="form-text">Enter a YouTube or other supported video URL to automatically fetch its metadata.</div>
+                    </div>
+                    
+                    <div id="fetchStatus" class="alert alert-info d-none">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Fetching video metadata...
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="custom_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="custom_title" name="custom_title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="custom_creator" class="form-label">Creator</label>
+                        <input type="text" class="form-control" id="custom_creator" name="custom_creator">
+                        <div class="form-text">The name of the video's creator</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="custom_platform" class="form-label">Platform</label>
+                        <select class="form-select" id="custom_platform" name="custom_platform">
+                            <option value="">Select platform...</option>
+                            <option value="YouTube">YouTube</option>
+                            <option value="PonyTube">PonyTube</option>
+                            <option value="Vimeo">Vimeo</option>
+                            <option value="Dailymotion">Dailymotion</option>
+                            <option value="Bilibili">Bilibili</option>
+                            <option value="Twitter">Twitter</option>
+                            <option value="Odysee">Odysee</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="form-text">The platform where the video is hosted</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="custom_duration_seconds" class="form-label">Duration (seconds)</label>
+                            <input type="number" class="form-control" id="custom_duration_seconds" name="custom_duration_seconds" min="0">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="custom_upload_date" class="form-label">Upload Date</label>
+                            <input type="date" class="form-control" id="custom_upload_date" name="custom_upload_date">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="custom_thumbnail_url" class="form-label">Thumbnail URL</label>
+                        <input type="url" class="form-control" id="custom_thumbnail_url" name="custom_thumbnail_url">
+                        <div class="form-text">Optional. Will be displayed in the playlist.</div>
+                    </div>
+                    
+                    <div class="mt-3 mb-3" id="thumbnailPreview" style="display: none;">
+                        <img src="" alt="Thumbnail Preview" class="img-thumbnail" style="max-width: 200px;">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="position" class="form-label">Position in playlist</label>
+                        <input type="number" class="form-control" id="position" name="position" value="{{ playlist.items|length + 1 }}" min="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addCustomVideoForm" class="btn btn-primary">Add Custom Video</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Save playlist item positions
+        const savePositionsBtn = document.getElementById('savePositionsBtn');
+        if (savePositionsBtn) {
+            savePositionsBtn.addEventListener('click', function() {
+                const items = [];
+                document.querySelectorAll('#playlistItemsBody tr').forEach(row => {
+                    const itemId = row.dataset.itemId;
+                    const position = row.querySelector('.position-input').value;
+                    items.push({
+                        id: itemId,
+                        position: position
+                    });
+                });
+                
+                // Send AJAX request to update positions
+                fetch('{{ url_for("admin.update_playlist_positions", id=playlist.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ items: items })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Playlist order updated successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error updating playlist order: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the playlist order.');
+                });
+            });
+        }
+        
+        // Delete playlist item
+        document.querySelectorAll('.delete-item').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove this item from the playlist?')) {
+                    const itemId = this.dataset.itemId;
+                    window.location.href = '/admin/playlists/{{ playlist.id }}/items/' + itemId + '/delete';
+                }
+            });
+        });
+        
+        // Add video to playlist
+        document.querySelectorAll('.add-video').forEach(button => {
+            button.addEventListener('click', function() {
+                const videoId = this.dataset.videoId;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("admin.add_playlist_item", playlist_id=playlist.id) }}';
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                
+                const videoIdInput = document.createElement('input');
+                videoIdInput.type = 'hidden';
+                videoIdInput.name = 'video_id';
+                videoIdInput.value = videoId;
+                
+                form.appendChild(csrfInput);
+                form.appendChild(videoIdInput);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+        
+        // Filter videos in the search
+        const videoSearch = document.getElementById('video_search');
+        if (videoSearch) {
+            videoSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                document.querySelectorAll('#videoSearchResults .list-group-item').forEach(item => {
+                    const title = item.querySelector('h6').textContent.toLowerCase();
+                    const creator = item.querySelector('small').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || creator.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Fetch video metadata for custom video entries
+        const fetchMetadataBtn = document.getElementById('fetchMetadataBtn');
+        const customUrlInput = document.getElementById('custom_url');
+        const customTitleInput = document.getElementById('custom_title');
+        const customThumbnailInput = document.getElementById('custom_thumbnail_url');
+        const thumbnailPreview = document.getElementById('thumbnailPreview');
+        const fetchStatus = document.getElementById('fetchStatus');
+        
+        if (fetchMetadataBtn && customUrlInput) {
+            fetchMetadataBtn.addEventListener('click', function() {
+                const videoUrl = customUrlInput.value.trim();
+                
+                if (!videoUrl) {
+                    alert('Please enter a video URL first.');
+                    return;
+                }
+                
+                // Show loading indicator
+                fetchStatus.classList.remove('d-none');
+                
+                // Fetch video metadata from the server
+                fetch('{{ url_for("admin.fetch_video_metadata") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ url: videoUrl })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    fetchStatus.classList.add('d-none');
+                    
+                    if (data.success) {
+                        // Fill in the form with the fetched metadata
+                        customTitleInput.value = data.title || '';
+                        
+                        // Get references to the new form fields
+                        const customCreatorInput = document.getElementById('custom_creator');
+                        const customPlatformSelect = document.getElementById('custom_platform');
+                        const customDurationInput = document.getElementById('custom_duration_seconds');
+                        const customUploadDateInput = document.getElementById('custom_upload_date');
+                        
+                        // Populate the new fields if the data exists
+                        if (customCreatorInput && data.creator) {
+                            customCreatorInput.value = data.creator;
+                        }
+                        
+                        if (customPlatformSelect && data.platform) {
+                            // Find and select the matching option
+                            const options = customPlatformSelect.options;
+                            for (let i = 0; i < options.length; i++) {
+                                if (options[i].value.toLowerCase() === data.platform.toLowerCase()) {
+                                    customPlatformSelect.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (customDurationInput && data.duration_seconds) {
+                            customDurationInput.value = data.duration_seconds;
+                        }
+                        
+                        if (customUploadDateInput && data.upload_date) {
+                            // Convert date to YYYY-MM-DD format for input[type="date"]
+                            const date = new Date(data.upload_date);
+                            const formattedDate = date.toISOString().split('T')[0];
+                            customUploadDateInput.value = formattedDate;
+                        }
+                        
+                        if (data.thumbnail_url) {
+                            customThumbnailInput.value = data.thumbnail_url;
+                            thumbnailPreview.querySelector('img').src = data.thumbnail_url;
+                            thumbnailPreview.style.display = 'block';
+                        } else {
+                            thumbnailPreview.style.display = 'none';
+                        }
+                    } else {
+                        // Show error message
+                        alert('Error fetching video metadata: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    // Hide loading indicator
+                    fetchStatus.classList.add('d-none');
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching video metadata.');
+                });
+            });
+        }
+        
+        // Show thumbnail preview when thumbnail URL is entered manually
+        if (customThumbnailInput && thumbnailPreview) {
+            customThumbnailInput.addEventListener('input', function() {
+                const thumbnailUrl = this.value.trim();
+                
+                if (thumbnailUrl) {
+                    thumbnailPreview.querySelector('img').src = thumbnailUrl;
+                    thumbnailPreview.style.display = 'block';
+                } else {
+                    thumbnailPreview.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

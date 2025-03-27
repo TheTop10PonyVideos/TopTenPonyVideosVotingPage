@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        {% include 'admin/nav.html' %}
+    </div>
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Site Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.settings') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <h6 class="mb-3">Test Mode Settings</h6>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="test_mode" name="test_mode" {% if test_mode %}checked{% endif %}>
+                        <label class="form-check-label" for="test_mode">Enable Test Mode (Auto-Login)</label>
+                        <div class="form-text text-muted">When enabled, users will be automatically logged in as the test user.</div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Test User Configuration</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="test_username" class="form-label">Test Username</label>
+                                <input type="text" class="form-control" id="test_username" name="test_username" value="{{ test_user.username }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="test_email" class="form-label">Test Email</label>
+                                <input type="email" class="form-control" id="test_email" name="test_email" value="{{ test_user.email }}">
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="test_is_admin" name="test_is_admin" {% if test_user.is_admin %}checked{% endif %}>
+                                <label class="form-check-label" for="test_is_admin">Test User is Admin</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">Playlist Configuration</h6>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="show_standalone_playlists" name="show_standalone_playlists" {% if show_standalone_playlists %}checked{% endif %}>
+                        <label class="form-check-label" for="show_standalone_playlists">Show Standalone Playlists</label>
+                        <div class="form-text text-muted">Show playlists not associated with a voting period in the public playlist list.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enable_historical_playlists" name="enable_historical_playlists" {% if enable_historical_playlists %}checked{% endif %}>
+                        <label class="form-check-label" for="enable_historical_playlists">Enable Historical Playlists</label>
+                        <div class="form-text text-muted">Enable the historical Top Ten playlists feature which imports data from a Google Spreadsheet.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="historical_playlist_spreadsheet_url" class="form-label">Historical Playlist Spreadsheet URL</label>
+                        <input type="text" class="form-control" id="historical_playlist_spreadsheet_url" name="historical_playlist_spreadsheet_url" value="{{ historical_playlist_spreadsheet_url }}">
+                        <div class="form-text text-muted">URL of the Google Spreadsheet containing historical Top Ten data.</div>
+                    </div>
+                    
+                    <h6 class="mb-3">Admin Access Configuration</h6>
+                    <div class="mb-3">
+                        <label for="admin_discord_ids" class="form-label">Admin Discord IDs</label>
+                        <input type="text" class="form-control" id="admin_discord_ids" name="admin_discord_ids" value="{{ admin_discord_ids }}">
+                        <div class="form-text text-muted">Comma-separated list of Discord user IDs that should have admin privileges. Users with these Discord IDs will automatically be granted admin status when they log in.</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <div>
+                                <strong>How to find a Discord User ID:</strong>
+                                <ol class="mb-0">
+                                    <li>Enable Developer Mode in Discord (User Settings > Advanced)</li>
+                                    <li>Right-click on a user and select "Copy ID"</li>
+                                    <li>Add the copied ID to the list above, separated by commas</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Test user functionality has been removed
+</script>
+{% endblock %}

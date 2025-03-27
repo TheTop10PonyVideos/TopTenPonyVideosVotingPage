@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}TopTenPonyVideos - Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="px-4 py-5 text-center">
+        <h1 class="display-5 fw-bold text-body-emphasis mb-4">
+            <i class="fas fa-horse-head me-2"></i>TopTenPonyVideos
+        </h1>
+        <div class="col-lg-8 mx-auto">
+            <p class="lead mb-4">Vote for your favorite pony videos from across the internet and help determine the top ten pony videos each month!</p>
+            
+            {% if current_period %}
+                {% if current_time < current_period.start_date %}
+                    <div class="alert alert-info">
+                        <h4>Next Voting Period: {{ current_period.name }}</h4>
+                        <p>Voting starts: {{ current_period.start_date.strftime('%B %d, %Y') }}</p>
+                        <p>Voting ends: {{ current_period.end_date.strftime('%B %d, %Y') }}</p>
+                        <p>Videos must be uploaded between {{ current_period.eligibility_start_date.strftime('%B %d, %Y') }} and {{ current_period.eligibility_end_date.strftime('%B %d, %Y') }} to be eligible.</p>
+                    </div>
+                {% elif current_time <= current_period.end_date %}
+                    <div class="alert alert-success">
+                        <h4>Voting Now Open: {{ current_period.name }}</h4>
+                        <p>Voting ends: {{ current_period.end_date.strftime('%B %d, %Y') }}</p>
+                        <p>Videos must be uploaded between {{ current_period.eligibility_start_date.strftime('%B %d, %Y') }} and {{ current_period.eligibility_end_date.strftime('%B %d, %Y') }} to be eligible.</p>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('main.vote') }}" class="btn btn-primary">Vote Now</a>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log in to Vote</a>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <h4>Voting Closed: {{ current_period.name }}</h4>
+                        <p>Results are now available!</p>
+                        <a href="{{ url_for('main.results') }}" class="btn btn-primary">View Results</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <h4>No Active Voting Period</h4>
+                    <p>Check back soon for the next voting period!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if top_videos %}
+    <div class="my-5">
+        <h2 class="text-center mb-4">Latest Top 10 Results</h2>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Video</th>
+                        <th>Platform</th>
+                        <th>Creator</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_videos %}
+                    <tr>
+                        <td class="text-center">
+                            {% if item.rank == 1 %}
+                            <span class="badge bg-warning text-dark">🥇 #{{ item.rank }}</span>
+                            {% elif item.rank == 2 %}
+                            <span class="badge bg-secondary">🥈 #{{ item.rank }}</span>
+                            {% elif item.rank == 3 %}
+                            <span class="badge bg-danger">🥉 #{{ item.rank }}</span>
+                            {% else %}
+                            <span class="badge bg-dark">#{{ item.rank }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ item.video.url }}" target="_blank" class="d-flex align-items-center text-decoration-none">
+                                {% if item.video.thumbnail_url %}
+                                <img src="{{ item.video.thumbnail_url }}" alt="{{ item.video.title }}" class="me-2" style="width: 60px; height: 45px; object-fit: cover;">
+                                {% else %}
+                                <div class="me-2 bg-secondary d-flex align-items-center justify-content-center" style="width: 60px; height: 45px;">
+                                    <i class="fas fa-film"></i>
+                                </div>
+                                {% endif %}
+                                <span>{{ item.video.title }}</span>
+                            </a>
+                        </td>
+                        <td>
+                            {% if item.video.platform == 'youtube' %}
+                            <i class="fab fa-youtube text-danger"></i>
+                            {% elif item.video.platform == 'twitter' %}
+                            <i class="fab fa-twitter text-info"></i>
+                            {% elif item.video.platform == 'vimeo' %}
+                            <i class="fab fa-vimeo text-primary"></i>
+                            {% else %}
+                            <i class="fas fa-video"></i>
+                            {% endif %}
+                            {{ item.video.platform|capitalize }}
+                        </td>
+                        <td>{{ item.video.creator.name }}</td>
+                        <td>{{ item.score }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4 py-5">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">Voting Rules</h3>
+                    <ul class="list-group list-group-flush text-start">
+                        <li class="list-group-item">Vote for 5-10 videos</li>
+                        <li class="list-group-item">If voting for 5 or fewer videos, all must be from different creators</li>
+                        <li class="list-group-item">Videos must be at least 30 seconds long</li>
+                        <li class="list-group-item">Videos must be uploaded in the previous month</li>
+                        <li class="list-group-item">Blacklisted creators are not eligible</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-photo-video fa-3x mb-3 text-success"></i>
+                    <h3 class="card-title">Supported Platforms</h3>
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        <span class="badge bg-danger"><i class="fab fa-youtube me-1"></i> YouTube</span>
+                        <span class="badge bg-primary"><i class="fas fa-video me-1"></i> Pony.tube</span>
+                        <span class="badge bg-info"><i class="fas fa-video me-1"></i> Bilibili</span>
+                        <span class="badge bg-primary"><i class="fab fa-vimeo me-1"></i> Vimeo</span>
+                        <span class="badge bg-danger"><i class="fas fa-video me-1"></i> Dailymotion</span>
+                        <span class="badge bg-success"><i class="fas fa-horse me-1"></i> Thishorsie</span>
+                        <span class="badge bg-dark"><i class="fab fa-tiktok me-1"></i> TikTok</span>
+                        <span class="badge bg-info"><i class="fab fa-twitter me-1"></i> Twitter/X</span>
+                        <span class="badge bg-warning text-dark"><i class="fas fa-video me-1"></i> Odysee</span>
+                        <span class="badge bg-danger"><i class="fas fa-gamepad me-1"></i> Newgrounds</span>
+                        <span class="badge bg-primary"><i class="fas fa-cloud me-1"></i> Bluesky</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x mb-3 text-warning"></i>
+                    <h3 class="card-title">Get Started</h3>
+                    <p class="card-text">Join the community and start voting for your favorite pony videos to help determine the monthly top ten!</p>
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.vote') }}" class="btn btn-primary">Vote Now</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log in to Vote</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

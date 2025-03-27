@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Blacklist Management - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Blacklist Management</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Add Creator to Blacklist</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin.add_to_blacklist') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="mb-3">
+                            <label for="creator_id" class="form-label">Select Creator</label>
+                            <select name="creator_id" id="creator_id" class="form-select" required>
+                                <option value="">-- Select Creator --</option>
+                                {% for creator in creators %}
+                                {% if not creator.blacklist_entry %}
+                                <option value="{{ creator.id }}">{{ creator.name }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Reason (Optional)</label>
+                            <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
+                            <div class="form-text">Provide a reason for blacklisting this creator</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-ban me-1"></i> Add to Blacklist
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>About Blacklisting</h3>
+                </div>
+                <div class="card-body">
+                    <p>The blacklist prevents videos from certain creators from being eligible for voting. Use this feature responsibly for the following reasons:</p>
+                    <ul>
+                        <li>Creators who have violated community guidelines</li>
+                        <li>Creators who have requested not to be included</li>
+                        <li>Creators who are not producing pony-related content</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i> 
+                        Blacklisting is visible to all users. Always provide a clear reason when blacklisting a creator.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3>Blacklisted Creators</h3>
+        </div>
+        <div class="card-body">
+            {% if blacklisted %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Creator</th>
+                            <th>Date Added</th>
+                            <th>Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in blacklisted %}
+                        <tr>
+                            <td>{{ entry.creator.name }}</td>
+                            <td>{{ entry.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ entry.reason or "No reason provided" }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-warning" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#removeModal{{ entry.id }}">
+                                    <i class="fas fa-user-check me-1"></i> Remove from Blacklist
+                                </button>
+                                
+                                
+                                <div class="modal fade" id="removeModal{{ entry.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Removal</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to remove {{ entry.creator.name }} from the blacklist?</p>
+                                                <p>This will make their videos eligible for voting again.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('admin.remove_from_blacklist', id=entry.id) }}" method="post">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                                    <button type="submit" class="btn btn-warning">Remove from Blacklist</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                There are no blacklisted creators at this time.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

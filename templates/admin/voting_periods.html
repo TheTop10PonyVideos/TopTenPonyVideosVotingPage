@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Voting Periods - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Manage Voting Periods</h1>
+        <a href="{{ url_for('admin.create_voting_period') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Create New Period
+        </a>
+    </div>
+    
+    {% if periods %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Eligibility Period</th>
+                            <th>Points System</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for period in periods %}
+                        <tr>
+                            <td class="fw-bold">{{ period.name }}</td>
+                            <td>{{ period.start_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ period.end_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <small>{{ period.eligibility_start_date.strftime('%Y-%m-%d') }} to {{ period.eligibility_end_date.strftime('%Y-%m-%d') }}</small>
+                            </td>
+                            <td>
+                                {% if period.use_weighted_points %}
+                                <span class="badge bg-primary" title="Rank 1: 10 points to Rank 10: 1 point">Weighted</span>
+                                {% else %}
+                                <span class="badge bg-primary" title="All ranks worth 1 point">Equal</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if period.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% elif period.end_date < now %}
+                                <span class="badge bg-secondary">Completed</span>
+                                {% else %}
+                                <span class="badge bg-info">Upcoming</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.edit_voting_period', id=period.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ period.id }}">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                                
+                                
+                                <div class="modal fade" id="deleteModal{{ period.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Deletion</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete the voting period "{{ period.name }}"?</p>
+                                                <p class="text-danger">This action cannot be undone!</p>
+                                                
+                                                {% set vote_count = period.votes|length %}
+                                                {% if vote_count > 0 %}
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                                    This period has {{ vote_count }} votes associated with it.
+                                                    Deleting it will remove all these votes.
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('admin.delete_voting_period', id=period.id) }}" method="post">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No voting periods have been created yet. Create your first voting period to get started.
+    </div>
+    {% endif %}
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3>About Voting Periods</h3>
+        </div>
+        <div class="card-body">
+            <p>Voting periods define when users can submit their votes for pony videos. Key properties include:</p>
+            <ul>
+                <li><strong>Name:</strong> A descriptive name for the voting period (e.g., "April 2023")</li>
+                <li><strong>Start Date:</strong> When voting opens</li>
+                <li><strong>End Date:</strong> When voting closes</li>
+                <li><strong>Eligibility Period:</strong> Videos must be published during this time to be eligible (automatically calculated as the previous month)</li>
+                <li><strong>Points System:</strong> Determines how votes are weighted in results:
+                    <ul>
+                        <li><em>Weighted:</em> Votes are weighted by rank (1st place: 10 points, 2nd place: 9 points, etc.)</li>
+                        <li><em>Equal:</em> All votes count equally (1 point each) regardless of rank</li>
+                    </ul>
+                </li>
+                <li><strong>Active Status:</strong> Only one period can be active at any time</li>
+            </ul>
+            <div class="alert alert-info">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>Tip:</strong> Create upcoming voting periods in advance to help users understand when the next vote will be.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

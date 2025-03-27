@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ playlist.name }} - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.view_playlists') }}">Playlists</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ playlist.name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="mb-2">{{ playlist.name }}</h1>
+        <p class="text-muted">
+            {% if playlist.is_historical %}
+                {% set month_name = playlist.created_at.strftime('%B') if playlist.month is none else ('January,February,March,April,May,June,July,August,September,October,November,December').split(',')[playlist.month-1] %}
+                <span class="badge bg-info rounded-pill">Historical: {{ month_name }} {{ playlist.year }}</span>
+            {% elif playlist.voting_period %}
+                <span class="badge bg-primary rounded-pill">{{ playlist.voting_period.name }}</span>
+            {% else %}
+                <span class="badge bg-secondary rounded-pill">Standalone Playlist</span>
+            {% endif %}
+            <span class="badge bg-secondary rounded-pill">{{ playlist.created_at.strftime('%Y-%m-%d') }}</span>
+            <span class="badge bg-info rounded-pill">{{ playlist.items|length }} videos</span>
+        </p>
+        {% if playlist.description %}
+        <div class="card bg-dark mb-4">
+            <div class="card-body">
+                <p class="card-text">{{ playlist.description }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-md-4 text-md-end">
+        {% if playlist.voting_period_id %}
+            <a href="{{ url_for('main.results', period_id=playlist.voting_period_id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-bar me-2"></i> View Full Results
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if playlist.items %}
+            <div class="list-group mb-4">
+                {% for item in playlist.items %}
+                <div class="list-group-item list-group-item-action flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                        <h5 class="mb-1">
+                            <span class="badge bg-secondary rounded-pill me-2">{{ loop.index }}</span>
+                            {% if item.video %}
+                                {{ item.video.title }}
+                            {% else %}
+                                {{ item.custom_title }}
+                            {% endif %}
+                        </h5>
+                    </div>
+                    
+                    <div class="row">
+                        {% if item.video %}
+                            <div class="col-md-4">
+                                {% if item.video.thumbnail_url %}
+                                <a href="{{ item.video.url }}" target="_blank" rel="noopener noreferrer">
+                                    <img src="{{ item.video.thumbnail_url }}" alt="Thumbnail" class="img-fluid rounded">
+                                </a>
+                                {% else %}
+                                <div class="placeholder-thumbnail bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-video fa-3x text-light"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <p>
+                                    <strong>Creator:</strong> {{ item.video.creator.name }}<br>
+                                    <strong>Platform:</strong> {{ item.video.platform }}<br>
+                                    {% if item.video.duration_seconds %}
+                                    <strong>Duration:</strong> {{ (item.video.duration_seconds // 60)|int }}:{{ '%02d'|format(item.video.duration_seconds % 60) }}<br>
+                                    {% endif %}
+                                    {% if item.video.upload_date %}
+                                    <strong>Upload Date:</strong> {{ item.video.upload_date.strftime('%Y-%m-%d') }}
+                                    {% endif %}
+                                </p>
+                                <a href="{{ item.video.url }}" class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-external-link-alt me-1"></i> Watch on {{ item.video.platform }}
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="col-md-4">
+                                {% if item.custom_thumbnail_url %}
+                                <a href="{{ item.custom_url }}" target="_blank" rel="noopener noreferrer">
+                                    <img src="{{ item.custom_thumbnail_url }}" alt="Thumbnail" class="img-fluid rounded">
+                                </a>
+                                {% else %}
+                                <div class="placeholder-thumbnail bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-video fa-3x text-light"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <p>
+                                    {% if item.custom_creator %}
+                                    <strong>Creator:</strong> {{ item.custom_creator }}<br>
+                                    {% endif %}
+                                    
+                                    {% if item.custom_platform %}
+                                    <strong>Platform:</strong> {{ item.custom_platform }}<br>
+                                    {% endif %}
+                                    
+                                    {% if item.custom_duration_seconds %}
+                                    <strong>Duration:</strong> {{ (item.custom_duration_seconds // 60)|int }}:{{ '%02d'|format(item.custom_duration_seconds % 60) }}<br>
+                                    {% endif %}
+                                    
+                                    {% if item.custom_upload_date %}
+                                    <strong>Upload Date:</strong> {{ item.custom_upload_date.strftime('%Y-%m-%d') }}<br>
+                                    {% endif %}
+                                    
+                                    <em class="text-muted">Custom entry added by administrators</em>
+                                </p>
+                                <a href="{{ item.custom_url }}" class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-external-link-alt me-1"></i> 
+                                    {% if item.custom_platform %}
+                                        Watch on {{ item.custom_platform }}
+                                    {% else %}
+                                        View Content
+                                    {% endif %}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> This playlist is currently empty.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if related_playlists %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="mb-3">Related Playlists</h3>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for related in related_playlists %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ related.name }}</h5>
+                        {% if related.is_historical %}
+                            {% set month_name = related.created_at.strftime('%B') if related.month is none else ('January,February,March,April,May,June,July,August,September,October,November,December').split(',')[related.month-1] %}
+                            <span class="badge bg-info mb-2">Historical: {{ month_name }} {{ related.year }}</span>
+                        {% elif related.voting_period %}
+                            <span class="badge bg-primary mb-2">{{ related.voting_period.name }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary mb-2">Standalone</span>
+                        {% endif %}
+                        <p class="card-text text-muted">{{ related.description|truncate(80) }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('main.view_playlist', id=related.id) }}" class="btn btn-outline-primary btn-sm">
+                            View Playlist
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+.placeholder-thumbnail {
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    position: relative;
+    border-radius: 0.25rem;
+}
+.placeholder-thumbnail i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+</style>
+{% endblock %}

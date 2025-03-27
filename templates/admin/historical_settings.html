@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Historical Playlist Settings - Admin Dashboard - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        {% include 'admin/nav.html' %}
+    </div>
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Historical Playlist Settings</h1>
+        </div>
+
+        <div class="alert alert-info">
+            <p><i class="fas fa-info-circle me-2"></i> Configure settings for importing historical Top Ten playlists from Google Spreadsheets.</p>
+            <p class="mb-0">The spreadsheet should have columns for Year (A), Month (B), Rank (C), Video Link (D), Status (H), and Alternate Link (I).</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="spreadsheet_id" class="form-label">Google Spreadsheet ID</label>
+                        <input type="text" class="form-control" id="spreadsheet_id" name="spreadsheet_id" value="{{ settings.spreadsheet_id or '' }}"
+                            placeholder="1rEofPkliKppvttd8pEX8H6DtSljlfmQLdFR-SlyyX7E" required>
+                        <div class="form-text">The ID of the Google Spreadsheet containing historical data.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="worksheet_name" class="form-label">Worksheet Name</label>
+                        <input type="text" class="form-control" id="worksheet_name" name="worksheet_name" value="{{ settings.worksheet_name or 'Sheet1' }}"
+                            placeholder="Sheet1">
+                        <div class="form-text">The name of the worksheet to import from.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="max_playlists" class="form-label">Maximum Playlists to Import</label>
+                        <input type="number" class="form-control" id="max_playlists" name="max_playlists" value="{{ settings.max_playlists or 10 }}"
+                            min="1" max="100">
+                        <div class="form-text">Limit the number of playlists to import, starting with the most recent.</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="import_limit_year" class="form-label">Date Limit: Year</label>
+                            <input type="number" class="form-control" id="import_limit_year" name="import_limit_year" value="{{ settings.import_limit_year or '' }}"
+                                min="2000" max="2025" placeholder="2015">
+                            <div class="form-text">Only import playlists from this year and after.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="import_limit_month" class="form-label">Date Limit: Month</label>
+                            <select class="form-select" id="import_limit_month" name="import_limit_month">
+                                <option value="">All months</option>
+                                {% for i in range(1, 13) %}
+                                    <option value="{{ i }}" {% if settings.import_limit_month == i %}selected{% endif %}>
+                                        {{ ('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')[i-1] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">If a year is selected, only import from this month and after.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="auto_import_enabled" name="auto_import_enabled" 
+                            {% if settings.auto_import_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="auto_import_enabled">Enable Automatic Import</label>
+                        <div class="form-text">Set up scheduled import of historical playlists.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="next_scheduled_import" class="form-label">Next Scheduled Import</label>
+                        <input type="date" class="form-control" id="next_scheduled_import" name="next_scheduled_import" 
+                            value="{{ settings.next_scheduled_import.strftime('%Y-%m-%d') if settings.next_scheduled_import else '' }}">
+                        <div class="form-text">When to perform the next automatic import if enabled.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <button type="submit" name="import_now" value="1" class="btn btn-success">
+                            <i class="fas fa-download me-2"></i> Import Now
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Current Status</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Total Historical Playlists:</strong> {{ historical_count }}</p>
+                <p><strong>Last Import:</strong> {{ settings.last_import_date.strftime('%Y-%m-%d %H:%M:%S') if settings.last_import_date else 'Never' }}</p>
+                
+                <div class="alert alert-warning">
+                    <p><i class="fas fa-exclamation-triangle me-2"></i> Important Requirements:</p>
+                    <ul class="mb-0">
+                        <li>The spreadsheet must follow the required column format</li>
+                        <li>For private spreadsheets: Google Service Account credentials must be set in the GOOGLE_SERVICE_ACCOUNT_INFO environment variable</li>
+                        <li>For public spreadsheets: No credentials needed, but sheet must be publicly accessible via the export URL</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <p><i class="fas fa-info-circle me-2"></i> Spreadsheet Column Format:</p>
+                    <ul class="mb-0">
+                        <li>Column A: Year (e.g., 2020)</li>
+                        <li>Column B: Month (1-12)</li>
+                        <li>Column C: Rank (1-10)</li>
+                        <li>Column D: Video URL</li>
+                        <li>Column H: Status (Optional: indicates if video was deleted/terminated)</li>
+                        <li>Column I: Alternative URL (Optional: used if original is unavailable)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

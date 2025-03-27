@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Playlist - Admin Dashboard - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        {% include 'admin/nav.html' %}
+    </div>
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Create Playlist</h1>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_standalone" name="is_standalone">
+                        <label class="form-check-label" for="is_standalone">Create as Standalone Playlist</label>
+                        <div class="form-text">Standalone playlists are not tied to any voting period.</div>
+                    </div>
+
+                    <div class="mb-3" id="voting-period-container">
+                        <label for="voting_period_id" class="form-label">Voting Period</label>
+                        <select class="form-select" id="voting_period_id" name="voting_period_id">
+                            <option value="">Select a voting period</option>
+                            {% for period in periods %}
+                            <option value="{{ period.id }}" {% if preselected_period_id and preselected_period_id == period.id %}selected{% endif %}>
+                                {{ period.name }} ({{ period.start_date.strftime('%Y-%m-%d') }} to {{ period.end_date.strftime('%Y-%m-%d') }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">This playlist will be associated with videos from this voting period.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_public" name="is_public" checked>
+                        <label class="form-check-label" for="is_public">Make this playlist public</label>
+                        <div class="form-text">Public playlists will be shown in the public playlists section.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.results') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create Playlist</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle voting period visibility based on standalone checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const standaloneCheckbox = document.getElementById('is_standalone');
+        const votingPeriodContainer = document.getElementById('voting-period-container');
+        const votingPeriodSelect = document.getElementById('voting_period_id');
+        
+        function toggleVotingPeriod() {
+            if (standaloneCheckbox.checked) {
+                votingPeriodContainer.style.display = 'none';
+                votingPeriodSelect.removeAttribute('required');
+                votingPeriodSelect.value = '';
+            } else {
+                votingPeriodContainer.style.display = 'block';
+                votingPeriodSelect.setAttribute('required', 'required');
+            }
+        }
+        
+        // Initial state
+        toggleVotingPeriod();
+        
+        // Listen for changes
+        standaloneCheckbox.addEventListener('change', toggleVotingPeriod);
+    });
+</script>
+{% endblock %}

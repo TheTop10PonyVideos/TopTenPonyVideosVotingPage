@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Results - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Top Ten Pony Videos</h1>
+    
+    {% if period %}
+    <div class="alert alert-info mb-4">
+        <h4>{{ period.name }}</h4>
+        <p>Voting period: {{ period.start_date.strftime('%B %d, %Y') }} to {{ period.end_date.strftime('%B %d, %Y') }}</p>
+        <p>Videos uploaded between {{ period.eligibility_start_date.strftime('%B %d, %Y') }} and {{ period.eligibility_end_date.strftime('%B %d, %Y') }} were eligible.</p>
+        <p>
+            <strong>Point System:</strong> 
+            {% if period.use_weighted_points %}
+            <span class="badge bg-primary" title="Rank 1: 10 points, Rank 2: 9 points, etc.">Weighted</span>
+            <small class="text-muted ms-2">Votes are weighted by rank (1st: 10 points → 10th: 1 point)</small>
+            {% else %}
+            <span class="badge bg-primary" title="All ranks worth 1 point">Equal</span>
+            <small class="text-muted ms-2">All votes count equally (1 point each) regardless of rank</small>
+            {% endif %}
+        </p>
+    </div>
+    
+    {% if results %}
+    <div class="row mb-5">
+        {% if results|length >= 3 %}
+        <div class="col-12 text-center mb-5">
+            <div class="row">
+                
+                <div class="col-md-4 order-md-1">
+                    <div class="card h-100 border-secondary">
+                        <div class="card-header bg-secondary text-white text-center">
+                            <h3><i class="fas fa-medal"></i> Second Place</h3>
+                        </div>
+                        <div class="position-relative">
+                            {% if results[1].video.thumbnail_url %}
+                            <img src="{{ results[1].video.thumbnail_url }}" class="card-img-top" alt="{{ results[1].video.title }}">
+                            {% else %}
+                            <div class="bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-film fa-3x text-light"></i>
+                            </div>
+                            {% endif %}
+                            <span class="position-absolute top-0 end-0 badge bg-secondary m-2">
+                                {{ results[1].points }} points
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ results[1].video.title }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-user me-1"></i> {{ results[1].video.creator.name }}<br>
+                                <i class="fas fa-video me-1"></i> {{ results[1].video.platform|capitalize }}
+                            </p>
+                            <a href="{{ results[1].video.url }}" target="_blank" class="btn btn-secondary">Watch Video</a>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div class="col-md-4 order-md-0">
+                    <div class="card h-100 border-warning" style="transform: scale(1.05);">
+                        <div class="card-header bg-warning text-dark text-center">
+                            <h3><i class="fas fa-trophy"></i> First Place</h3>
+                        </div>
+                        <div class="position-relative">
+                            {% if results[0].video.thumbnail_url %}
+                            <img src="{{ results[0].video.thumbnail_url }}" class="card-img-top" alt="{{ results[0].video.title }}">
+                            {% else %}
+                            <div class="bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-film fa-3x text-light"></i>
+                            </div>
+                            {% endif %}
+                            <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">
+                                {{ results[0].points }} points
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ results[0].video.title }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-user me-1"></i> {{ results[0].video.creator.name }}<br>
+                                <i class="fas fa-video me-1"></i> {{ results[0].video.platform|capitalize }}
+                            </p>
+                            <a href="{{ results[0].video.url }}" target="_blank" class="btn btn-warning text-dark">Watch Video</a>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div class="col-md-4 order-md-2">
+                    <div class="card h-100 border-danger">
+                        <div class="card-header bg-danger text-white text-center">
+                            <h3><i class="fas fa-medal"></i> Third Place</h3>
+                        </div>
+                        <div class="position-relative">
+                            {% if results[2].video.thumbnail_url %}
+                            <img src="{{ results[2].video.thumbnail_url }}" class="card-img-top" alt="{{ results[2].video.title }}">
+                            {% else %}
+                            <div class="bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-film fa-3x text-light"></i>
+                            </div>
+                            {% endif %}
+                            <span class="position-absolute top-0 end-0 badge bg-danger m-2">
+                                {{ results[2].points }} points
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ results[2].video.title }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-user me-1"></i> {{ results[2].video.creator.name }}<br>
+                                <i class="fas fa-video me-1"></i> {{ results[2].video.platform|capitalize }}
+                            </p>
+                            <a href="{{ results[2].video.url }}" target="_blank" class="btn btn-danger">Watch Video</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Full Results</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Video</th>
+                                <th>Creator</th>
+                                <th>Platform</th>
+                                <th>Points</th>
+                                <th>Votes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr>
+                                <td class="text-center">
+                                    {% if result.rank == 1 %}
+                                    <span class="badge bg-warning text-dark">🥇 #{{ result.rank }}</span>
+                                    {% elif result.rank == 2 %}
+                                    <span class="badge bg-secondary">🥈 #{{ result.rank }}</span>
+                                    {% elif result.rank == 3 %}
+                                    <span class="badge bg-danger">🥉 #{{ result.rank }}</span>
+                                    {% else %}
+                                    <span class="badge bg-dark">#{{ result.rank }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if result.video.thumbnail_url %}
+                                        <img src="{{ result.video.thumbnail_url }}" class="me-2" alt="{{ result.video.title }}" style="width: 80px; height: 60px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="me-2 bg-secondary d-flex align-items-center justify-content-center" style="width: 80px; height: 60px;">
+                                            <i class="fas fa-film fa-2x"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold">{{ result.video.title }}</div>
+                                            <small class="text-muted">{{ result.video.duration_seconds // 60 }}:{{ "%02d"|format(result.video.duration_seconds % 60) }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ result.video.creator.name }}</td>
+                                <td>
+                                    {% if result.video.platform == 'youtube' %}
+                                    <i class="fab fa-youtube text-danger"></i>
+                                    {% elif result.video.platform == 'twitter' %}
+                                    <i class="fab fa-twitter text-info"></i>
+                                    {% elif result.video.platform == 'vimeo' %}
+                                    <i class="fab fa-vimeo text-primary"></i>
+                                    {% else %}
+                                    <i class="fas fa-video"></i>
+                                    {% endif %}
+                                    {{ result.video.platform|capitalize }}
+                                </td>
+                                <td>{{ result.points }}</td>
+                                <td>{{ result.vote_count }}</td>
+                                <td>
+                                    <a href="{{ result.video.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt me-1"></i> Watch
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <h4>No Results Available</h4>
+        <p>There are no results available for this voting period yet.</p>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-warning">
+        <h4>No Completed Voting Periods</h4>
+        <p>There are no completed voting periods yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

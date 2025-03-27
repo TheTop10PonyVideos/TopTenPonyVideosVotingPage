@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Results - Admin Dashboard - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        {% include 'admin/nav.html' %}
+    </div>
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Voting Results</h1>
+            <div>
+                <form class="d-flex" method="get">
+                    <select name="period_id" class="form-select me-2" onchange="this.form.submit()">
+                        {% for period in periods %}
+                        <option value="{{ period.id }}" {% if selected_period and period.id == selected_period.id %}selected{% endif %}>
+                            {{ period.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        {% if selected_period %}
+        <div class="alert alert-info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4>{{ selected_period.name }}</h4>
+                    <p class="mb-0">
+                        Voting Period: {{ selected_period.start_date.strftime('%Y-%m-%d') }} to {{ selected_period.end_date.strftime('%Y-%m-%d') }}
+                    </p>
+                </div>
+                <div>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download me-1"></i> Export
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.export_results', period_id=selected_period.id) }}">
+                                    <i class="fas fa-file-csv me-1"></i> Export Results
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('admin.export_votes', period_id=selected_period.id) }}">
+                                    <i class="fas fa-file-csv me-1"></i> Export All Votes
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if results %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Final Results</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Video</th>
+                                <th>Creator</th>
+                                <th style="width: 120px;">Votes</th>
+                                <th style="width: 120px;">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr>
+                                <td class="fw-bold">{{ result.rank }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if result.video.thumbnail_url %}
+                                        <img src="{{ result.video.thumbnail_url }}" alt="{{ result.video.title }}" class="me-2" style="width: 80px; height: 45px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-secondary d-flex align-items-center justify-content-center me-2" style="width: 80px; height: 45px;">
+                                            <i class="fas fa-film text-white"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold">{{ result.video.title }}</div>
+                                            <a href="{{ result.video.url }}" target="_blank" class="small text-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i>{{ result.video.platform|capitalize }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ result.creator.name }}</td>
+                                <td>{{ result.vote_count }}</td>
+                                <td class="fw-bold">{{ result.total_points }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Playlists for this Voting Period</h3>
+                <a href="{{ url_for('admin.create_playlist') }}?voting_period_id={{ selected_period.id }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> Create Playlist
+                </a>
+            </div>
+            <div class="card-body">
+                {% if playlists %}
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    {% for playlist in playlists %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ playlist.name }}</h5>
+                                <p class="card-text small text-muted">
+                                    {{ playlist.items|length }} videos
+                                    <br>
+                                    Created: {{ playlist.created_at.strftime('%Y-%m-%d') }}
+                                </p>
+                                <p class="card-text">{{ playlist.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100">
+                                    <a href="{{ url_for('admin.manage_playlist_items', id=playlist.id) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-list me-1"></i> Manage Items
+                                    </a>
+                                    <a href="{{ url_for('admin.edit_playlist', id=playlist.id) }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No playlists have been created for this voting period yet.
+                    <a href="{{ url_for('admin.create_playlist') }}?voting_period_id={{ selected_period.id }}" class="btn btn-primary btn-sm ms-3">Create Playlist</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i> No voting results available for this period.
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i> No voting periods found.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

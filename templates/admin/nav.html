@@ -1,0 +1,38 @@
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Admin Panel</h5>
+    </div>
+    <div class="list-group list-group-flush">
+        <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.dashboard') %}active{% endif %}">
+            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.users') %}active{% endif %}">
+            <i class="fas fa-users me-2"></i> Users
+        </a>
+        <a href="{{ url_for('admin.voting_periods') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.voting_periods') %}active{% endif %}">
+            <i class="fas fa-calendar-alt me-2"></i> Voting Periods
+        </a>
+        <a href="{{ url_for('admin.blacklist') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.blacklist') %}active{% endif %}">
+            <i class="fas fa-ban me-2"></i> Blacklist
+        </a>
+        <a href="{{ url_for('admin.results') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.results') or request.path.startswith('/admin/results') %}active{% endif %}">
+            <i class="fas fa-chart-bar me-2"></i> Results
+        </a>
+        <a href="{{ url_for('admin.playlists') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.playlists') or request.path.startswith('/admin/playlists') %}active{% endif %}">
+            <i class="fas fa-list me-2"></i> Playlists
+        </a>
+        <a href="{{ url_for('admin.historical_playlist_settings') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.historical_playlist_settings') or request.path.startswith('/admin/historical') %}active{% endif %}">
+            <i class="fas fa-history me-2"></i> Historical Playlists
+        </a>
+        <a href="{{ url_for('admin.settings') }}" class="list-group-item list-group-item-action {% if request.path == url_for('admin.settings') %}active{% endif %}">
+            <i class="fas fa-cog me-2"></i> Settings
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="mb-0 text-muted small">Logged in as <strong>{{ current_user.username }}</strong></p>
+        <p class="mb-0 text-muted small">Admin mode: <strong class="text-success">Active</strong></p>
+    </div>
+</div>

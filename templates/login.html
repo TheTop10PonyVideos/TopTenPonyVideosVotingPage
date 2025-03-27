@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3>Login to Vote</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-center mb-4">
+                        Log in with your Discord account to start voting for your favorite pony videos!
+                    </p>
+                    
+                    <div class="d-grid">
+                        <a href="{{ url_for('auth.discord_login') }}" class="btn btn-lg btn-primary">
+                            <i class="fab fa-discord me-2"></i> Login with Discord
+                        </a>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="small text-muted">
+                            By logging in, you agree to our terms of service and privacy policy.
+                            We only store your username and email address to identify your votes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">About Authentication</h5>
+                    <p class="card-text">
+                        We use Discord for authentication to ensure secure login without storing passwords.
+                        Your account information is only used for identification and vote tracking.
+                    </p>
+                    <p class="card-text">
+                        If you have any issues with logging in, please contact us via Discord.
+                    </p>
+                </div>
+            </div>
+            
+            {% if current_user.is_admin %}
+            <div class="card mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Discord OAuth Setup Guide</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>For administrators:</strong> When setting up Discord OAuth behind a reverse proxy:
+                    </p>
+                    <ol>
+                        <li>Set the <code>PUBLIC_URL</code> environment variable to your public domain (e.g., <code>https://yourdomain.com</code>).</li>
+                        <li>In your Discord Developer Portal, add the following redirect URI: 
+                            <code>https://yourdomain.com/discord/callback</code>
+                        </li>
+                        <li>Make sure both URIs match <em>exactly</em> (including trailing slashes if any).</li>
+                    </ol>
+                    <p class="text-muted small">
+                        Current callback URI template: <code>{{ config.get('PUBLIC_URL', request.host_url.rstrip('/')) }}/discord/callback</code>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Playlists - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4 mb-4 text-center">Playlists</h1>
+        <p class="lead text-center text-muted mb-4">
+            Curated collections of the best pony videos, created by our team based on community voting results.
+        </p>
+        
+        {% if config.ENABLE_HISTORICAL_PLAYLISTS and historical_playlists %}
+        <div class="text-center mb-4">
+            <a href="#historical-playlists" class="btn btn-info">
+                <i class="fas fa-history me-2"></i> Historical Top Ten Archives
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    {% if playlists %}
+        {% for playlist in playlists %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ playlist.name }}</h5>
+                        <p class="card-text text-muted small">
+                            {% if playlist.is_historical %}
+                                {% set month_name = playlist.created_at.strftime('%B') if playlist.month is none else (loop.cycle('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'))|replace(loop.index0, playlist.month-1) %}
+                                Historical: {{ month_name }} {{ playlist.year }}
+                            {% elif playlist.voting_period %}
+                                {{ playlist.voting_period.name }}
+                            {% else %}
+                                Standalone Playlist
+                            {% endif %}
+                        </p>
+                        <p class="card-text">{{ playlist.description|truncate(100) }}</p>
+                        <p class="card-text">
+                            <span class="badge bg-primary rounded-pill">{{ playlist.items|length }} videos</span>
+                            <span class="badge bg-secondary rounded-pill">{{ playlist.created_at.strftime('%Y-%m-%d') }}</span>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('main.view_playlist', id=playlist.id) }}" class="btn btn-primary w-100">
+                            <i class="fas fa-play-circle me-2"></i> View Playlist
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i> No playlists are currently available.
+            </div>
+            <div class="text-center mt-4">
+                <p>Playlists are typically created after voting periods end and results are tallied.</p>
+                <p>Check back later or participate in an active voting period!</p>
+                <a href="{{ url_for('main.vote') }}" class="btn btn-primary">
+                    <i class="fas fa-vote-yea me-2"></i> Go to Voting
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% set historical_playlists_section = historical_playlists %}
+{% if config.ENABLE_HISTORICAL_PLAYLISTS and historical_playlists %}
+<div class="row mt-5" id="historical-playlists">
+    <div class="col-12">
+        <h3 class="mb-3">Historical Top Ten Playlists</h3>
+        <div class="row g-4">
+            {% for playlist in historical_playlists|sort(attribute='year', reverse=True)|sort(attribute='month', reverse=True) %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ playlist.name }}</h5>
+                            {% set month_name = playlist.created_at.strftime('%B') if playlist.month is none else ('January,February,March,April,May,June,July,August,September,October,November,December').split(',')[playlist.month-1] %}
+                            <span class="badge bg-info mb-2">{{ month_name }} {{ playlist.year }}</span>
+                            <p class="card-text">
+                                <span class="badge bg-primary rounded-pill">{{ playlist.items|length }} videos</span>
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('main.view_playlist', id=playlist.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-play-circle me-2"></i> View Playlist
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if voting_periods %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="mb-3">Past Voting Periods</h3>
+        <div class="list-group">
+            {% for period in voting_periods %}
+                <a href="{{ url_for('main.view_playlists', period_id=period.id) }}" 
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    {{ period.name }}
+                    <span class="badge bg-primary rounded-pill">{{ period.playlists|length }} playlists</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

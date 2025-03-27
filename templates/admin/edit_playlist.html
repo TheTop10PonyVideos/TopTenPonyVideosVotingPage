@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Playlist - Admin Dashboard - TopTenPonyVideos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        {% include 'admin/nav.html' %}
+    </div>
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Edit Playlist</h1>
+            <form action="{{ url_for('admin.delete_playlist', id=playlist.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this playlist? This action cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i> Delete Playlist
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ playlist.name }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ playlist.description }}</textarea>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_standalone" name="is_standalone" {% if not playlist.voting_period_id %}checked{% endif %}>
+                        <label class="form-check-label" for="is_standalone">Standalone Playlist</label>
+                        <div class="form-text">Standalone playlists are not tied to any voting period.</div>
+                    </div>
+
+                    <div class="mb-3" id="voting-period-container" {% if not playlist.voting_period_id %}style="display: none;"{% endif %}>
+                        <label for="voting_period_id" class="form-label">Voting Period</label>
+                        <select class="form-select" id="voting_period_id" name="voting_period_id" {% if playlist.voting_period_id %}required{% endif %}>
+                            <option value="">Select a voting period</option>
+                            {% for period in periods %}
+                            <option value="{{ period.id }}" {% if period.id == playlist.voting_period_id %}selected{% endif %}>
+                                {{ period.name }} ({{ period.start_date.strftime('%Y-%m-%d') }} to {{ period.end_date.strftime('%Y-%m-%d') }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">This playlist will be associated with videos from this voting period.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_public" name="is_public" {% if playlist.is_public %}checked{% endif %}>
+                        <label class="form-check-label" for="is_public">Public Playlist</label>
+                        <div class="form-text">Public playlists will be shown in the public playlists section.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.results') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{{ url_for('admin.manage_playlist_items', id=playlist.id) }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-music me-1"></i> Manage Playlist Items
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle voting period visibility based on standalone checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        const standaloneCheckbox = document.getElementById('is_standalone');
+        const votingPeriodContainer = document.getElementById('voting-period-container');
+        const votingPeriodSelect = document.getElementById('voting_period_id');
+        
+        function toggleVotingPeriod() {
+            if (standaloneCheckbox.checked) {
+                votingPeriodContainer.style.display = 'none';
+                votingPeriodSelect.removeAttribute('required');
+                votingPeriodSelect.value = '';
+            } else {
+                votingPeriodContainer.style.display = 'block';
+                votingPeriodSelect.setAttribute('required', 'required');
+            }
+        }
+        
+        // Listen for changes
+        standaloneCheckbox.addEventListener('change', toggleVotingPeriod);
+    });
+</script>
+{% endblock %}
