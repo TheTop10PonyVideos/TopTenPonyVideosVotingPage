@@ -5,7 +5,11 @@ from flask import Blueprint, redirect, url_for, flash, request, render_template,
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from models import User
+from dotenv import load_dotenv
 auth_bp = Blueprint('auth', __name__)
+
+load_dotenv()
+
 DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID")
 DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET")
 DISCORD_API_ENDPOINT = "https://discord.com/api"
