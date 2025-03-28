@@ -1,5 +1,8 @@
 import os
 import json
+from dotenv import load_dotenv()
+
+load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get("SESSION_SECRET", "development-key-not-for-production")
